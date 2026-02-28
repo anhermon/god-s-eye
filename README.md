@@ -6,7 +6,7 @@ An open-source real-time global intelligence dashboard built with Next.js 16, Ce
 
 ## Why This Exists
 
-The original [WorldView](https://worldview.earth) project by [Bilawal Sidhu](https://x.com/bilawalsidhu) is a stunning piece of work. But it's closed source. For a project built on top of open-source software — CesiumJS, Next.js, React, OpenSky Network, USGS feeds, CelesTrak, and countless other freely available APIs and libraries — keeping it proprietary is, frankly, a disservice to the community that made it possible in the first place.
+The original [WorldView](https://worldview.earth) project by [Bilawal Sidhu](https://x.com/bilawalsidhu) is a stunning piece of work. But it's closed source (at the time of writing). For a project built on top of open-source software — CesiumJS, Next.js, React, OpenSky Network, USGS feeds, CelesTrak, and countless other freely available APIs and libraries — keeping it proprietary is, frankly, a disservice to the community that made it possible in the first place.
 
 Open source isn't just a license. It's a commitment to the ecosystem you benefit from. If your entire stack is open and the data you consume is public, your visualization layer shouldn't be locked behind a paywall or a waitlist.
 
