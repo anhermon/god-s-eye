@@ -417,10 +417,11 @@ body {
   background: rgba(0, 10, 0, 0.95);
   border: 1px solid rgba(0, 255, 65, 0.3);
   border-radius: 4px;
-  padding: 8px;
+  padding: 10px;
   z-index: 50;
   box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
   font-family: monospace;
+  min-width: 220px;
 }
 
 .calendar-nav-btn {
@@ -452,6 +453,8 @@ body {
   border-radius: 2px;
   background: none;
   font-family: monospace;
+  position: relative;
+  z-index: 1;
 }
 
 .calendar-day:hover {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Cesium from 'cesium';
-import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, NewsArticle, LiveStream, Disaster, Flight } from '@/types';
+import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient } from '@/types';
 
 export interface Viewport {
   centerLat: number;
@@ -39,6 +39,10 @@ interface WorldViewStore {
   disasterFilters: Record<DisasterCategory, boolean>;
   toggleDisasterFilter: (category: DisasterCategory) => void;
 
+  // Military action sub-type filters
+  militaryFilters: Record<MilitaryCategory, boolean>;
+  toggleMilitaryFilter: (category: MilitaryCategory) => void;
+
   // Media modal (YouTube embeds)
   mediaModalOpen: boolean;
   mediaModalContent: { videoId: string; title: string } | null;
@@ -58,6 +62,8 @@ interface WorldViewStore {
   setLiveStreams: (streams: LiveStream[]) => void;
   disasterEvents: Disaster[];
   setDisasterEvents: (events: Disaster[]) => void;
+  militaryActions: MilitaryAction[];
+  setMilitaryActions: (actions: MilitaryAction[]) => void;
 
   viewport: Viewport;
   setViewport: (v: Viewport) => void;
@@ -65,6 +71,12 @@ interface WorldViewStore {
   viewer: Cesium.Viewer | null;
   setViewer: (viewer: Cesium.Viewer | null) => void;
   flyTo: (lon: number, lat: number, alt?: number) => void;
+
+  // Agent swarm
+  agentSwarmStatus: AgentSwarmState;
+  setAgentSwarmStatus: (status: AgentSwarmState) => void;
+  agentPanelExpanded: boolean;
+  setAgentPanelExpanded: (expanded: boolean) => void;
 
   // Timeline / simulation time
   simulationDate: Date;
@@ -76,6 +88,20 @@ interface WorldViewStore {
   setSimulationTime: (hour: number, minute: number) => void;
   setCalendarOpen: (open: boolean) => void;
   resetToLive: () => void;
+
+  // Mission Control
+  missionControl: MissionControlState;
+  setDeploymentMode: (on: boolean) => void;
+  setDeploymentArea: (area: DeploymentAreaClient | null) => void;
+  openMissionModal: () => void;
+  closeMissionModal: () => void;
+  setMissionPhase: (phase: MissionPhaseClient) => void;
+  updateAgentState: (agentId: string, update: Partial<MissionAgentClientState>) => void;
+  setAgentStates: (states: MissionAgentClientState[]) => void;
+  addMissionLog: (entry: MissionLogClientEntry) => void;
+  setMissionResults: (results: AgentIntelItemClient[]) => void;
+  clearMission: () => void;
+  setMissionOllamaStatus: (connected: boolean, model: string | null) => void;
 }
 
 export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
@@ -88,6 +114,7 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     cameras: false,
     livestreams: false,
     news: false,
+    militaryActions: false,
   },
   toggleLayer: (layer) =>
     set((state) => ({
@@ -141,6 +168,21 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
       },
     })),
 
+  militaryFilters: {
+    airstrikes: true,
+    groundOps: true,
+    navalOps: true,
+    missileStrikes: true,
+    other: true,
+  },
+  toggleMilitaryFilter: (category) =>
+    set((state) => ({
+      militaryFilters: {
+        ...state.militaryFilters,
+        [category]: !state.militaryFilters[category],
+      },
+    })),
+
   mediaModalOpen: false,
   mediaModalContent: null,
   openMediaModal: (videoId, title) =>
@@ -159,6 +201,20 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
   setLiveStreams: (streams) => set({ liveStreams: streams }),
   disasterEvents: [],
   setDisasterEvents: (events) => set({ disasterEvents: events }),
+  militaryActions: [],
+  setMilitaryActions: (actions) => set({ militaryActions: actions }),
+
+  agentSwarmStatus: {
+    ollamaConnected: false,
+    modelName: null,
+    running: false,
+    lastRun: 0,
+    totalItems: 0,
+    agentResults: [],
+  },
+  setAgentSwarmStatus: (status) => set({ agentSwarmStatus: status }),
+  agentPanelExpanded: false,
+  setAgentPanelExpanded: (expanded) => set({ agentPanelExpanded: expanded }),
 
   viewport: {
     centerLat: 30.2672,
@@ -242,5 +298,101 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
       viewer.clock.shouldAnimate = true;
     }
   },
+
+  // Mission Control
+  missionControl: {
+    deploymentMode: false,
+    deploymentArea: null,
+    missionModalOpen: false,
+    missionPhase: "configuring",
+    agentStates: [],
+    missionLogs: [],
+    missionResults: [],
+    ollamaConnected: false,
+    modelName: null,
+  },
+
+  setDeploymentMode: (on) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, deploymentMode: on },
+    })),
+
+  setDeploymentArea: (area) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, deploymentArea: area },
+    })),
+
+  openMissionModal: () =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, missionModalOpen: true },
+    })),
+
+  closeMissionModal: () =>
+    set((state) => ({
+      missionControl: {
+        ...state.missionControl,
+        missionModalOpen: false,
+        deploymentMode: false,
+      },
+    })),
+
+  setMissionPhase: (phase) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, missionPhase: phase },
+    })),
+
+  updateAgentState: (agentId, update) =>
+    set((state) => ({
+      missionControl: {
+        ...state.missionControl,
+        agentStates: state.missionControl.agentStates.map((a) =>
+          a.agentId === agentId ? { ...a, ...update } : a
+        ),
+      },
+    })),
+
+  setAgentStates: (states) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, agentStates: states },
+    })),
+
+  addMissionLog: (entry) =>
+    set((state) => {
+      // Deduplicate by ID (SSE can reconnect and replay events)
+      if (state.missionControl.missionLogs.some((l) => l.id === entry.id)) {
+        return state;
+      }
+      return {
+        missionControl: {
+          ...state.missionControl,
+          missionLogs: [...state.missionControl.missionLogs, entry],
+        },
+      };
+    }),
+
+  setMissionResults: (results) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, missionResults: results },
+    })),
+
+  clearMission: () =>
+    set((state) => ({
+      missionControl: {
+        ...state.missionControl,
+        missionPhase: "configuring" as const,
+        agentStates: [],
+        missionLogs: [],
+        missionResults: [],
+      },
+    })),
+
+  setMissionOllamaStatus: (connected, model) =>
+    set((state) => ({
+      missionControl: {
+        ...state.missionControl,
+        ollamaConnected: connected,
+        modelName: model,
+      },
+    })),
 }));
 

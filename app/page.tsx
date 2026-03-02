@@ -10,10 +10,12 @@ import CameraModal from "@/components/ui/Modal";
 import MediaModal from "@/components/ui/MediaModal";
 import SearchBar from "@/components/hud/SearchBar";
 import LandmarkNav from "@/components/hud/LandmarkNav";
+import AgentPanel from "@/components/hud/AgentPanel";
 import CameraList from "@/components/hud/CameraList";
 import ScopeOverlay from "@/components/hud/ScopeOverlay";
 import DataFeed from "@/components/hud/DataFeed";
 import TimelineSlider from "@/components/hud/TimelineSlider";
+import MissionControlModal from "@/components/mission-control/MissionControlModal";
 
 // CesiumJS must be loaded client-side only (no SSR)
 const Globe = dynamic(() => import("@/components/Globe"), {
@@ -55,6 +57,7 @@ export default function Dashboard() {
             <Sidebar />
             <CameraList />
             <LandmarkNav />
+            <AgentPanel />
           </div>
           <BottomBar />
         </div>
@@ -93,6 +96,9 @@ export default function Dashboard() {
 
       {/* YouTube Live Stream Modal */}
       <MediaModal />
+
+      {/* Mission Control Modal */}
+      <MissionControlModal />
     </div>
   );
 }

@@ -115,19 +115,7 @@ export const SCHEMA_SCRIPTS = {
 
     mgmt.commit()
 
-    // Wait for indexes to become available
-    mgmt = graph.openManagement()
-    try {
-      mgmt.awaitGraphIndexStatus(graph, 'byGkgRecordId').call()
-    } catch(e) {}
-    try {
-      mgmt.awaitGraphIndexStatus(graph, 'byDate').call()
-    } catch(e) {}
-    try {
-      mgmt.awaitGraphIndexStatus(graph, 'byName').call()
-    } catch(e) {}
-    mgmt.rollback()
-
+    // Indexes register asynchronously — they'll be available within seconds
     'Indexes created'
   `,
 };

@@ -137,10 +137,18 @@ declare module "gremlin" {
     export { Graph };
   }
 
+  class AnonymousTraversalSource {
+    with_(connection: DriverRemoteConnection): GraphTraversalSource;
+  }
+
+  function traversal(): AnonymousTraversalSource;
+
   namespace process {
     export {
       GraphTraversalSource,
       GraphTraversal,
+      AnonymousTraversalSource,
+      traversal,
       statics,
       t,
       P,

@@ -1,8 +1,7 @@
 import gremlin from "gremlin";
 
 const { DriverRemoteConnection } = gremlin.driver;
-const { Graph } = gremlin.structure;
-const { GraphTraversalSource } = gremlin.process;
+const { GraphTraversalSource, traversal: anonTraversal } = gremlin.process;
 
 const GREMLIN_URL = process.env.GREMLIN_URL || "ws://localhost:8182/gremlin";
 const CONNECTION_TIMEOUT_MS = 3_000; // 3s — fail fast if graph isn't running
@@ -43,7 +42,10 @@ export async function getConnection(): Promise<
   }
 
   try {
-    const conn = new DriverRemoteConnection(GREMLIN_URL);
+    // Use GraphSON serializer (not GraphBinary) for JanusGraph compatibility
+    const conn = new DriverRemoteConnection(GREMLIN_URL, {
+      mimeType: "application/vnd.gremlin-v3.0+json",
+    });
     await withTimeout(conn.open(), CONNECTION_TIMEOUT_MS, "Gremlin connection");
     connection = conn;
     lastFailure = 0;
@@ -63,8 +65,7 @@ export async function getTraversalSource(): Promise<
   if (traversalSource) return traversalSource;
 
   const conn = await getConnection();
-  const graph = new Graph();
-  traversalSource = graph.traversal().withRemote(conn);
+  traversalSource = anonTraversal().with_(conn);
   return traversalSource;
 }
 

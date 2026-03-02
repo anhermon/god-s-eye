@@ -22,9 +22,10 @@ Open source isn't just a license. It's a commitment to the ecosystem you benefit
   - Earthquakes (USGS real-time feed)
   - Near-Earth Asteroids (NASA NeoWs API)
   - Weather Radar (OpenWeatherMap)
-  - CCTV Camera Feeds (Austin Mobility public network)
+  - CCTV Camera Feeds — 3,000+ cameras across 10+ cities with 3-tier progressive clustering
 - **View Modes** — Electro-Optical, FLIR Thermal, CRT, Night Vision
 - **Live CCTV Feeds** — Real traffic camera streams with simulated object detection overlay
+- **CCTV Clustering** — City-level clusters at global zoom, individual cameras on zoom-in, feed previews at street level
 - **Search** — Geocode any location and fly to it on the globe
 - **Quick Nav** — One-click navigation to major world cities
 
@@ -39,7 +40,7 @@ Open source isn't just a license. It's a commitment to the ecosystem you benefit
 | Styling | Tailwind CSS v4 + custom CSS |
 | State | Zustand |
 | Language | TypeScript |
-| Data Sources | OpenSky, CelesTrak, USGS, NASA NeoWs, OpenWeatherMap, Austin Mobility CCTV |
+| Data Sources | OpenSky, CelesTrak, USGS, NASA NeoWs, OpenWeatherMap, Caltrans, Austin Mobility, WSDOT, IDOT, Houston TranStar, NV Roads, FL511, NYC DOT, UK Highways, HK Transport |
 
 ## Getting Started
 
@@ -97,7 +98,8 @@ components/
 stores/
   worldview-store.ts    # Zustand global state
 lib/
-  api/                  # Data fetching (NASA, USGS, CelesTrak, etc.)
+  api/                  # Data fetching (NASA, USGS, CelesTrak, DOT cameras, etc.)
+  camera-clusters.ts    # City-level clustering + merge logic for CCTV cameras
   cesium-config.ts      # Cesium initialization
 ```
 
@@ -110,7 +112,17 @@ All data comes from publicly available APIs:
 - **Earthquakes**: [USGS Earthquake Hazards](https://earthquake.usgs.gov/) — real-time seismic data
 - **Asteroids**: [NASA NeoWs](https://api.nasa.gov/) — near-Earth object tracking
 - **Weather**: [OpenWeatherMap](https://openweathermap.org/) — global weather data
-- **CCTV Feeds**: [City of Austin Mobility](https://data.austintexas.gov/) — public traffic cameras
+- **CCTV Feeds**: Aggregated from public DOT APIs across 10+ cities:
+  - [Caltrans](https://cwwp2.dot.ca.gov/) — California (all districts, ~2,500+ cameras)
+  - [City of Austin Mobility](https://data.austintexas.gov/) — Austin, TX
+  - [WSDOT](https://data.wsdot.wa.gov/) — Seattle/Washington (ArcGIS FeatureServer)
+  - [IDOT/Travel Midwest](https://travelmidwest.com/) — Chicago/Illinois (ArcGIS FeatureServer)
+  - [Houston TranStar](https://traffic.houstontranstar.org/) — Houston, TX
+  - [NV Roads](https://www.nvroads.com/) — Las Vegas/Nevada (Iteris 511)
+  - [FL511](https://fl511.com/) — Orlando/Florida (Iteris 511)
+  - [NYC DOT](https://webcams.nyctmc.org/) — New York City
+  - [UK National Highways](https://www.trafficengland.com/) — London/UK
+  - [HK Transport Dept](https://data.gov.hk/) — Hong Kong
 - **Globe Tiles**: [CesiumJS](https://cesium.com/) — 3D geospatial platform (open source)
 
 ## License

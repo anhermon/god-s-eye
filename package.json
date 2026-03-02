@@ -17,11 +17,13 @@
   "dependencies": {
     "@next/swc-linux-x64-gnu": "^16.1.6",
     "adm-zip": "^0.5.16",
+    "ai": "^6.0.105",
     "cesium": "^1.138.0",
     "csstype": "^3.2.3",
     "duck-duck-scrape": "^2.2.7",
     "gremlin": "^3.8.0",
     "next": "16.1.6",
+    "ollama": "^0.6.3",
     "onnxruntime-web": "^1.24.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",

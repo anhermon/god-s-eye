@@ -19,7 +19,7 @@ services:
     ports:
       - "${GREMLIN_PORT:-8182}:8182"
     environment:
-      - JANUS_PROPS_TEMPLATE=cassandra
+      - JANUS_PROPS_TEMPLATE=cql
       - janusgraph.storage.hostname=cassandra
     depends_on:
       cassandra:

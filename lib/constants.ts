@@ -19,11 +19,12 @@ export const MAX_LOCATION_CACHE_ENTRIES = 20;
 // ── GDELT ────────────────────────────────────────────────────────
 
 /** GDELT master file list (GKG 2.0 updates every 15 min) */
+// NOTE: HTTPS fails from Node.js with TLS cert mismatch (data.gdeltproject.org → *.storage.googleapis.com)
 export const GDELT_MASTER_LIST_URL =
-  "https://data.gdeltproject.org/gdeltv2/masterfilelist.txt";
+  "http://data.gdeltproject.org/gdeltv2/masterfilelist.txt";
 
 /** GDELT file download base URL */
-export const GDELT_BASE_URL = "https://data.gdeltproject.org/gdeltv2/";
+export const GDELT_BASE_URL = "http://data.gdeltproject.org/gdeltv2/";
 
 /** Default lookback when no ingestion cursor exists */
 export const GKG_DEFAULT_LOOKBACK_HOURS = 24;

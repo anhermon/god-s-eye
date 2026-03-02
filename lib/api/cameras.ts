@@ -558,7 +558,9 @@ interface Iteris511Camera {
   roadway?: string;
   direction?: string;
   location?: string;
-  latLng?: { geography?: string }; // WKT: "POINT (-115.17 36.11)"
+  latLng?: {
+    geography?: string | { coordinateSystemId?: number; wellKnownText?: string };
+  };
   images?: { imageUrl?: string }[];
   region?: string;
   county?: string;
@@ -615,7 +617,11 @@ async function fetchIteris511Cameras(opts: {
       .filter((c) => c.latLng?.geography && c.images?.length)
       .map((c): Camera | null => {
         // Parse WKT: "POINT (-115.17 36.11)"
-        const match = c.latLng!.geography!.match(
+        // geography can be a string or an object with wellKnownText
+        const geo = c.latLng!.geography!;
+        const wkt = typeof geo === "string" ? geo : geo.wellKnownText;
+        if (!wkt) return null;
+        const match = wkt.match(
           /POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/
         );
         if (!match) return null;
@@ -733,16 +739,8 @@ export async function getAllCameras(): Promise<Camera[]> {
     return cachedCameras;
   }
 
-  // Fetch live camera data from all sources in parallel
-  const [
-    austinCameras,
-    caltransCameras,
-    houstonCameras,
-    chicagoCameras,
-    seattleCameras,
-    lasVegasCameras,
-    orlandoCameras,
-  ] = await Promise.all([
+  // Fetch live camera data from all sources in parallel (allSettled = one failure doesn't block others)
+  const results = await Promise.allSettled([
     fetchAustinCamerasLive().then((cams) =>
       cams.length > 0 ? cams : AUSTIN_CAMERAS
     ),
@@ -754,14 +752,20 @@ export async function getAllCameras(): Promise<Camera[]> {
     fetchOrlandoCameras(),
   ]);
 
+  const liveCameras = results
+    .filter((r): r is PromiseFulfilledResult<Camera[]> => r.status === "fulfilled")
+    .flatMap((r) => r.value);
+
+  // Log any failed sources for debugging
+  results.forEach((r, i) => {
+    if (r.status === "rejected") {
+      const sources = ["Austin", "Caltrans", "Houston", "Chicago", "Seattle", "Las Vegas", "Orlando"];
+      console.error(`Camera source ${sources[i]} failed:`, r.reason);
+    }
+  });
+
   const allCameras = [
-    ...austinCameras,
-    ...caltransCameras,
-    ...houstonCameras,
-    ...chicagoCameras,
-    ...seattleCameras,
-    ...lasVegasCameras,
-    ...orlandoCameras,
+    ...liveCameras,
     ...NYC_DOT_CAMERAS,
     ...UK_HIGHWAYS_CAMERAS,
     ...INTERNATIONAL_CAMERAS,

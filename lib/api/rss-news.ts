@@ -20,8 +20,8 @@ const FEEDS: FeedSource[] = [
   { url: "https://feeds.bbci.co.uk/news/world/rss.xml", name: "BBC World", defaultLat: 51.51, defaultLon: -0.13 },
   { url: "https://www.aljazeera.com/xml/rss/all.xml", name: "Al Jazeera", defaultLat: 25.29, defaultLon: 51.53 },
   { url: "https://rss.jpost.com/rss/rssfeedsheadlines.aspx", name: "Jerusalem Post", defaultLat: 31.77, defaultLon: 35.23 },
-  { url: "https://www.arabnews.com/rss.xml", name: "Arab News", defaultLat: 24.71, defaultLon: 46.68 },
-  { url: "https://www.tehrantimes.com/rss", name: "Tehran Times", defaultLat: 35.69, defaultLon: 51.39 },
+  { url: "https://www.france24.com/en/middle-east/rss", name: "France 24 Middle East", defaultLat: 33.0, defaultLon: 44.0 },
+  { url: "https://www.presstv.ir/rss.xml", name: "PressTV Iran", defaultLat: 35.69, defaultLon: 51.39 },
 ];
 
 // ── Location keyword lookup ───────────────────────────────────────────────────

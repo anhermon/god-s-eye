@@ -11,6 +11,8 @@
 - Center column is `flex-col`: globe viewport on top, TimelineSlider below
 - CesiumJS globe loaded via `next/dynamic` with `ssr: false` — Cesium cannot run server-side
 - State: Zustand store at `stores/worldview-store.ts`
+- **9 data layers**: flights, satellites, disasters, asteroids, weather, cameras, livestreams, news, militaryActions
+  - 3 expandable with sub-filters: flights (Regular/ISS), disasters (6 types), militaryActions (5 types)
 - View modes (EO/FLIR/CRT/NV): CSS filters in `components/effects/ViewModeFilter.tsx`
 - SVG filter `<defs>` (e.g. FLIR) must be rendered outside `overflow:hidden` containers — use `FlirFilterDefs` export at page level
 - Globe is clipped to circle via `.scope-viewport { border-radius: 50%; overflow: hidden }` in globals.css
@@ -25,11 +27,14 @@
   - Live mode → `/api/news` (graph + RSS + Reddit), `/api/disasters`
   - Historical mode → `/api/news/historical?date=YYYYMMDD&hour=HH`, `/api/disasters?date=YYYYMMDD`
   - Both hooks use `AbortController` to cancel in-flight requests on cleanup
-- **Flights, cameras, livestreams** are always live (no historical data available)
+- **Flights, cameras, livestreams, militaryActions** are always live (no historical data available)
 
 ## JanusGraph + Cassandra (Knowledge Graph)
 - `docker-compose.yml` — Cassandra 4.1.7 + JanusGraph 1.0.0 (ports configurable via env vars)
+  - JanusGraph 1.0.0 requires `JANUS_PROPS_TEMPLATE=cql` (NOT `cassandra`)
 - `lib/graph/client.ts` — Gremlin client with **3s connection timeout** and **1min backoff** on failure
+  - Uses `mimeType: "application/vnd.gremlin-v3.0+json"` (GraphSON) — GraphBinary fails with JanusGraph custom types
+  - Uses `gremlin.process.traversal().with_(conn)` (v3.8 API) — NOT `graph.traversal().withRemote(conn)` (v3.6)
   - If JanusGraph isn't running, graph queries fail fast and don't retry for 60s — app still works with RSS/Reddit only
 - `lib/graph/schema.ts` — Graph schema: article, person, organization, location, theme vertices + relationship edges
 - `scripts/init-graph-schema.ts` — Idempotent schema init (`npm run init-schema`)
@@ -50,6 +55,36 @@
 - `/api/news/realtime` — Same sources as `/api/news`, plus DDG as supplemental (often rate-limited)
 - `/api/news/historical` — JanusGraph only, queries ±30min window around requested time
 - `lib/api/duckduckgo.ts` — DDG results have `NaN` lat/lon (no geo data); callers must filter accordingly
+- RSS feeds: BBC Middle East, BBC World, Al Jazeera, Jerusalem Post, France 24 ME, PressTV Iran
+  - Tehran Times removed (307 redirect loop), replaced with PressTV
+  - Arab News removed (Cloudflare blocked), replaced with France 24 Middle East
+
+## Military Actions Layer
+- `/api/military` — GDELT GEO API with `theme:MILITARY` + conflict keyword queries
+- `hooks/useMilitary.ts` — Polls every 5 min, stores in Zustand `militaryActions`
+- `components/layers/MilitaryLayer.tsx` — Red/orange dots on globe, click for details
+- Sub-filters in sidebar: Airstrikes, Missile Strikes, Ground Ops, Naval Ops, Other
+- GDELT GEO API returns geocoded locations with mention counts, no auth required
+- Category classification uses keyword matching on article titles
+
+## Agent Swarm System (Ollama)
+- `lib/agents/` — Agent swarm infrastructure for AI-powered intelligence gathering
+- `lib/agents/ollama-client.ts` — Ollama connection with 3s timeout, 1min backoff (same pattern as JanusGraph)
+- `lib/agents/agents.ts` — Agent definitions: News Scout, Military Analyst, Disaster Monitor, GEOINT Analyst
+- `lib/agents/swarm.ts` — Orchestrator runs all agents in parallel via `Promise.all`
+- `/api/agents` — GET for status, POST `{ "action": "run" }` to trigger swarm
+- Preferred models: `qwen3.5:35b-a3b` (MoE, fast) > `qwen3.5:27b` > `lfm2:24b`
+  - **Avoid `qwen3.5:27b` for tool calling** — broken renderer in Ollama (issue #14493)
+- Graceful degradation: app works fully without Ollama, agents just return empty results
+- Context data gathered from GDELT GEO API, USGS, EONET before sending to LLM
+- **CPU-only performance**: qwen3:1.7b takes ~90s per response on CPU; agents run sequentially to avoid contention
+  - A GPU is strongly recommended for practical swarm execution
+  - Pipeline is verified working: Ollama connects, model resolves, context gathered, agents execute
+
+## GDELT API — HTTPS vs HTTP
+- **HTTPS fails from Node.js** for `data.gdeltproject.org` and `api.gdeltproject.org` with TLS cert mismatch (hosts redirect to Google Cloud Storage which serves `*.storage.googleapis.com` certs)
+- **All GDELT URLs must use HTTP** from server-side code — `curl` works with HTTPS but Node.js `fetch` does not
+- This affects: `lib/constants.ts` (GKG download URLs), `app/api/military/route.ts`, `lib/agents/swarm.ts`
 
 ## Shared Constants
 - `lib/constants.ts` — All configurable values: polling intervals, cache TTLs, GDELT URLs, entity caps, query defaults, dedup thresholds
@@ -65,9 +100,11 @@
 
 ## CCTV Camera Feeds
 - Camera data: `lib/api/cameras.ts` — aggregates 3,000+ cameras from 10+ cities via live APIs
+- `getAllCameras()` uses `Promise.allSettled` — one source failure won't block others
 - Two reusable generic fetchers:
   - `fetchArcGISCameras()` — for ArcGIS FeatureServer endpoints (WSDOT, IDOT/Travel Midwest)
   - `fetchIteris511Cameras()` — for Iteris 511 DataTables endpoints (NV Roads, FL511)
+    - `latLng.geography` can be a string OR object `{ wellKnownText: "POINT (...)" }` — code handles both
 - City sources: Caltrans (CA), Austin, Houston TranStar, WSDOT (Seattle), IDOT (Chicago), NV Roads (Las Vegas), FL511 (Orlando), NYC DOT, UK Highways, HK Transport
 - Houston TranStar is the only hardcoded fallback (no JSON API, only HTML scraping)
 - Images proxied through `/api/cameras/feed?id={id}` to avoid CORS — never load external camera URLs directly in `<img>` tags
@@ -83,6 +120,15 @@
 - Entities are lazily created/destroyed per viewport — not all 3,000+ at once
 - Cluster click → `flyTo(center, 500km)` → seamless tier transition
 - Shared camera state in Zustand store (`cameras` / `setCameras`) — CameraLayer fetches, CameraList reads
+
+## Adding New Data Layers
+Follow the 6-step pattern (all existing layers follow this):
+1. Add types to `types/index.ts` (LayerKey, LayerState, data interface, optional category type)
+2. Create data hook in `hooks/` (fetch + poll + AbortController cleanup)
+3. Update Zustand store (`stores/worldview-store.ts`) — data array + setter + optional sub-filters
+4. Create layer component in `components/layers/` (CustomDataSource + click handler + entities)
+5. Add to `components/hud/Sidebar.tsx` (layer toggle + optional expandable sub-filters)
+6. Add to `components/Globe.tsx` (conditional render) + `components/hud/DataFeed.tsx` (right panel)
 
 ## Adding New CCTV City Sources
 
@@ -128,7 +174,7 @@ async function fetchPhoenixCameras(): Promise<Camera[]> {
 - Must return `Camera[]` with valid lat/lon and a direct image URL (JPEG or PNG)
 
 **After adding the fetcher:**
-1. Add it to the `Promise.all` in `getAllCameras()` and spread into `allCameras`
+1. Add it to the `Promise.allSettled` in `getAllCameras()` (uses allSettled — one failure won't block others)
 2. Run `npm run build` — zero errors
 3. The clustering system handles everything else automatically (no changes to CameraLayer needed)
 

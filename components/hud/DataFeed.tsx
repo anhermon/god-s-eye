@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useWorldViewStore } from "@/stores/worldview-store";
-import type { EntityInfo, DisasterCategory } from "@/types";
+import type { EntityInfo, DisasterCategory, MilitaryCategory } from "@/types";
 
 const DISASTER_COLORS: Record<DisasterCategory, string> = {
   earthquakes: "#ff6644",
@@ -11,6 +11,14 @@ const DISASTER_COLORS: Record<DisasterCategory, string> = {
   severeStorms: "#ffaa00",
   floods: "#4488ff",
   ice: "#88ccff",
+};
+
+const MILITARY_COLORS: Record<MilitaryCategory, string> = {
+  airstrikes: "#ff2200",
+  missileStrikes: "#ff6600",
+  groundOps: "#cc4400",
+  navalOps: "#4488ff",
+  other: "#ff8800",
 };
 
 interface FeedGroup {
@@ -32,6 +40,7 @@ export default function DataFeed() {
   const newsArticles = useWorldViewStore((s) => s.newsArticles);
   const liveStreams = useWorldViewStore((s) => s.liveStreams);
   const disasterEvents = useWorldViewStore((s) => s.disasterEvents);
+  const militaryActions = useWorldViewStore((s) => s.militaryActions);
   const setSelectedEntity = useWorldViewStore((s) => s.setSelectedEntity);
   const flyTo = useWorldViewStore((s) => s.flyTo);
   const openMediaModal = useWorldViewStore((s) => s.openMediaModal);
@@ -120,6 +129,33 @@ export default function DataFeed() {
     });
   }
 
+  // Military Actions
+  if (layers.militaryActions && militaryActions.length > 0) {
+    groups.push({
+      key: "military",
+      label: "MILITARY ACTIONS",
+      color: "#ff4400",
+      items: militaryActions.map((m) => ({
+        id: m.id,
+        title: m.title,
+        meta: `${m.category.toUpperCase()} · ${m.location} · ${m.numMentions} mentions`,
+        entity: {
+          id: m.id,
+          type: "military",
+          name: m.title,
+          details: {
+            Category: m.category.toUpperCase(),
+            Location: m.location,
+            Mentions: m.numMentions,
+            URL: m.sourceUrl,
+          },
+          lat: m.latitude,
+          lon: m.longitude,
+        },
+      })),
+    });
+  }
+
   if (groups.length === 0) return null;
 
   return (
@@ -196,7 +232,7 @@ function FeedGroupSection({
 
             return (
               <div
-                key={item.id}
+                key={`${item.id}-${i}`}
                 className="flex items-start gap-1 group/item"
               >
                 <span

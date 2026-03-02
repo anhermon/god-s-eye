@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWorldViewStore } from "@/stores/worldview-store";
-import type { LayerKey, DisasterCategory, FlightCategory, MapStyle } from "@/types";
+import type { LayerKey, DisasterCategory, FlightCategory, MilitaryCategory, MapStyle } from "@/types";
 
 interface LayerOption {
   key: LayerKey;
@@ -20,6 +20,7 @@ const LAYERS: LayerOption[] = [
   { key: "cameras", label: "CCTV Mesh", icon: "\uD83D\uDCF9" },
   { key: "livestreams", label: "Live Streams", icon: "\u25B6" },
   { key: "news", label: "News Intel", icon: "\uD83D\uDCE1" },
+  { key: "militaryActions", label: "Military Actions", icon: "\u2694", expandable: true },
 ];
 
 const FLIGHT_SUBTYPES: { key: FlightCategory; label: string }[] = [
@@ -42,6 +43,14 @@ const DISASTER_SUBTYPES: { key: DisasterCategory; label: string }[] = [
   { key: "ice", label: "Ice" },
 ];
 
+const MILITARY_SUBTYPES: { key: MilitaryCategory; label: string }[] = [
+  { key: "airstrikes", label: "Airstrikes" },
+  { key: "missileStrikes", label: "Missile Strikes" },
+  { key: "groundOps", label: "Ground Ops" },
+  { key: "navalOps", label: "Naval Ops" },
+  { key: "other", label: "Other" },
+];
+
 export default function Sidebar() {
   const layers = useWorldViewStore((s) => s.layers);
   const toggleLayer = useWorldViewStore((s) => s.toggleLayer);
@@ -49,10 +58,13 @@ export default function Sidebar() {
   const toggleFlightFilter = useWorldViewStore((s) => s.toggleFlightFilter);
   const disasterFilters = useWorldViewStore((s) => s.disasterFilters);
   const toggleDisasterFilter = useWorldViewStore((s) => s.toggleDisasterFilter);
+  const militaryFilters = useWorldViewStore((s) => s.militaryFilters);
+  const toggleMilitaryFilter = useWorldViewStore((s) => s.toggleMilitaryFilter);
   const mapStyle = useWorldViewStore((s) => s.mapStyle);
   const setMapStyle = useWorldViewStore((s) => s.setMapStyle);
   const [flightsExpanded, setFlightsExpanded] = useState(false);
   const [disasterExpanded, setDisasterExpanded] = useState(false);
+  const [militaryExpanded, setMilitaryExpanded] = useState(false);
 
   return (
     <>
@@ -90,6 +102,7 @@ export default function Sidebar() {
           const active = layers[layer.key];
           const isFlights = layer.key === "flights";
           const isDisasters = layer.key === "disasters";
+          const isMilitary = layer.key === "militaryActions";
           const hasExpand = layer.expandable && active;
 
           return (
@@ -110,6 +123,7 @@ export default function Sidebar() {
                     toggleLayer(layer.key);
                     if (isFlights && !active) setFlightsExpanded(true);
                     if (isDisasters && !active) setDisasterExpanded(true);
+                    if (isMilitary && !active) setMilitaryExpanded(true);
                   }}
                   className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                 >
@@ -121,10 +135,11 @@ export default function Sidebar() {
                     onClick={() => {
                       if (isFlights) setFlightsExpanded(!flightsExpanded);
                       if (isDisasters) setDisasterExpanded(!disasterExpanded);
+                      if (isMilitary) setMilitaryExpanded(!militaryExpanded);
                     }}
                     className="ml-auto text-[9px] text-green-600 hover:text-green-400 cursor-pointer"
                   >
-                    {(isFlights && flightsExpanded) || (isDisasters && disasterExpanded)
+                    {(isFlights && flightsExpanded) || (isDisasters && disasterExpanded) || (isMilitary && militaryExpanded)
                       ? "[-]"
                       : "[+]"}
                   </button>
@@ -199,6 +214,40 @@ export default function Sidebar() {
                         `}
                       >
                         {disasterFilters[sub.key] ? "\u2713" : ""}
+                      </span>
+                      <span>{sub.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Military sub-filters */}
+              {isMilitary && active && militaryExpanded && (
+                <div className="ml-6 mt-0.5 flex flex-col gap-0.5">
+                  {MILITARY_SUBTYPES.map((sub) => (
+                    <button
+                      key={sub.key}
+                      onClick={() => toggleMilitaryFilter(sub.key)}
+                      className={`
+                        flex items-center gap-1.5 px-2 py-0.5 rounded-sm font-mono text-[9px] tracking-wide
+                        transition-all cursor-pointer
+                        ${
+                          militaryFilters[sub.key]
+                            ? "text-green-400/80"
+                            : "text-green-800/40"
+                        }
+                      `}
+                    >
+                      <span
+                        className={`w-2.5 h-2.5 border rounded-sm flex items-center justify-center text-[7px]
+                          ${
+                            militaryFilters[sub.key]
+                              ? "border-green-500/50 bg-green-900/30 text-green-400"
+                              : "border-green-900/30"
+                          }
+                        `}
+                      >
+                        {militaryFilters[sub.key] ? "\u2713" : ""}
                       </span>
                       <span>{sub.label}</span>
                     </button>

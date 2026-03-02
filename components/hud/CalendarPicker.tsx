@@ -84,7 +84,7 @@ export default function CalendarPicker() {
       </div>
 
       {/* Day-of-week headers */}
-      <div className="grid grid-cols-7 gap-0.5 mb-1">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {DAY_HEADERS.map((d) => (
           <div
             key={d}
@@ -96,7 +96,7 @@ export default function CalendarPicker() {
       </div>
 
       {/* Day grid */}
-      <div className="grid grid-cols-7 gap-0.5">
+      <div className="grid grid-cols-7 gap-1">
         {cells.map((day, i) => {
           if (day === null) {
             return <div key={`empty-${i}`} className="w-[28px] h-[24px]" />;

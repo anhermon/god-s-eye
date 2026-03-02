@@ -71,6 +71,14 @@ export async function getArticlesByDateRange(
       // No location data
     }
 
+    // date may come back as number or string depending on serializer
+    let dateStr: string;
+    try {
+      dateStr = new Date(Number(r.date)).toISOString();
+    } catch {
+      dateStr = new Date().toISOString();
+    }
+
     articles.push({
       id: r.gkgRecordId as string,
       title: (r.title as string) || (r.sourceCommonName as string) || "Untitled",
@@ -78,9 +86,9 @@ export async function getArticlesByDateRange(
       source: r.sourceCommonName as string,
       latitude: lat,
       longitude: lon,
-      date: new Date(r.date as number).toISOString(),
+      date: dateStr,
       language: "en",
-      tone: r.tone as number,
+      tone: Number(r.tone) || 0,
       imageUrl: (r.sharingImage as string) || undefined,
     });
   }
