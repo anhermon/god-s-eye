@@ -3,9 +3,10 @@ import { Ollama } from "ollama";
 // Preferred models in order of priority
 // lfm2 preferred — no thinking mode overhead, fast structured output
 const PREFERRED_MODELS = [
-  "lfm2:24b",        // Best quality, fits 16GB VRAM
-  "lfm2:24b-a2b",    // MoE variant, lower VRAM
-  "lfm2:3b",         // Small but good structured output, viable on CPU
+  "sam860/lfm2:8b",  // 5.9GB — fits fully in 12GB VRAM, fast on GPU
+  "lfm2:24b",        // Best quality, needs 16GB+ VRAM
+  "lfm2:24b-a2b",    // MoE variant, needs 16GB+ VRAM
+  "sam860/lfm2:2.6b",// 1.8GB — tiny, fast even on CPU
   "qwen3.5:35b-a3b", // MoE, fast, good tool calling (GPU only)
   "qwen3.5:27b",
   "qwen3.5:3b",
