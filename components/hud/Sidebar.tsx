@@ -12,6 +12,7 @@ interface LayerOption {
 }
 
 const LAYERS: LayerOption[] = [
+  { key: "iranConflict", label: "Iran Conflict OSINT", icon: "\uD83C\uDFAF" },
   { key: "flights", label: "Flights", icon: "\u2708", expandable: true },
   { key: "disasters", label: "Natural Disasters", icon: "\u26A0", expandable: true },
   { key: "asteroids", label: "Asteroids", icon: "\u2604" },

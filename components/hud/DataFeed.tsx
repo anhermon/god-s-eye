@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useWorldViewStore } from "@/stores/worldview-store";
-import type { EntityInfo, DisasterCategory, MilitaryCategory } from "@/types";
+import type { EntityInfo, DisasterCategory, MilitaryCategory, ConflictFeatureType } from "@/types";
 
 const DISASTER_COLORS: Record<DisasterCategory, string> = {
   earthquakes: "#ff6644",
@@ -19,6 +19,12 @@ const MILITARY_COLORS: Record<MilitaryCategory, string> = {
   groundOps: "#cc4400",
   navalOps: "#4488ff",
   other: "#ff8800",
+};
+
+const CONFLICT_COLORS: Record<ConflictFeatureType, string> = {
+  launch_point: "#ff3300",
+  target_point: "#ffcc00",
+  attack_arc: "#ff6600",
 };
 
 interface FeedGroup {
@@ -41,6 +47,7 @@ export default function DataFeed() {
   const liveStreams = useWorldViewStore((s) => s.liveStreams);
   const disasterEvents = useWorldViewStore((s) => s.disasterEvents);
   const militaryActions = useWorldViewStore((s) => s.militaryActions);
+  const conflictEvents = useWorldViewStore((s) => s.conflictEvents);
   const setSelectedEntity = useWorldViewStore((s) => s.setSelectedEntity);
   const flyTo = useWorldViewStore((s) => s.flyTo);
   const openMediaModal = useWorldViewStore((s) => s.openMediaModal);
@@ -125,6 +132,43 @@ export default function DataFeed() {
           lat: d.latitude,
           lon: d.longitude,
         },
+      })),
+    });
+  }
+
+  // Iran Conflict OSINT
+  const conflictPoints = conflictEvents.filter(
+    (e) => e.featureType === "launch_point" || e.featureType === "target_point"
+  );
+  if (layers.iranConflict && conflictPoints.length > 0) {
+    groups.push({
+      key: "iranConflict",
+      label: "IRAN CONFLICT OSINT",
+      color: "#ff3300",
+      items: conflictPoints.slice(0, 30).map((ev) => ({
+        id: ev.id,
+        title:
+          ev.featureType === "launch_point"
+            ? (ev.launchLabel ?? `Wave ${ev.waveNumber} — Launch Site`)
+            : (ev.targetName ?? `Wave ${ev.waveNumber} — Target`),
+        meta: `${ev.featureType === "launch_point" ? "LAUNCH" : "TARGET"} · W${ev.waveNumber} · D+${ev.conflictDay}`,
+        entity: {
+          id: ev.id,
+          type: "military" as const,
+          name: ev.featureType === "launch_point"
+            ? (ev.launchLabel ?? `Wave ${ev.waveNumber} Launch`)
+            : (ev.targetName ?? `Wave ${ev.waveNumber} Target`),
+          details: {
+            Operation: ev.waveCodename,
+            Wave: ev.waveNumber,
+            Day: `D+${ev.conflictDay}`,
+            Payload: ev.payload?.slice(0, 50) ?? "N/A",
+            ...(ev.targetCountry ? { Country: ev.targetCountry === "IL" ? "Israel" : ev.targetCountry } : {}),
+          },
+          lat: ev.latitude,
+          lon: ev.longitude,
+          alt: 1_500_000,
+        } as EntityInfo,
       })),
     });
   }

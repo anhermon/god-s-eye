@@ -2,7 +2,7 @@ export type ViewMode = 'eo' | 'flir' | 'nightvision' | 'crt';
 
 export type MapStyle = 'dark' | 'terrain' | 'city';
 
-export type LayerKey = 'flights' | 'satellites' | 'disasters' | 'asteroids' | 'weather' | 'cameras' | 'livestreams' | 'news' | 'militaryActions';
+export type LayerKey = 'flights' | 'satellites' | 'disasters' | 'asteroids' | 'weather' | 'cameras' | 'livestreams' | 'news' | 'militaryActions' | 'iranConflict';
 
 export interface LayerState {
   flights: boolean;
@@ -14,6 +14,7 @@ export interface LayerState {
   livestreams: boolean;
   news: boolean;
   militaryActions: boolean;
+  iranConflict: boolean;
 }
 
 export interface CursorPosition {
@@ -288,4 +289,34 @@ export interface NewsArticle {
   language: string;
   tone: number; // GDELT tone score
   imageUrl?: string;
+}
+
+// Iran-Israel conflict OSINT event (danielrosehill/Iran-Israel-War-2026-OSINT-Data)
+export type ConflictFeatureType = 'launch_point' | 'target_point' | 'attack_arc';
+
+export interface ConflictEvent {
+  id: string;
+  featureType: ConflictFeatureType;
+  latitude: number;
+  longitude: number;
+  // arc endpoints (only for attack_arc)
+  arcCoordinates?: Array<[number, number]>;
+  waveNumber: number;
+  waveCodename: string;
+  announcedUtc: string;
+  conflictDay: number;
+  payload: string;
+  dronesUsed: boolean;
+  ballisticMissilesUsed: boolean;
+  cruiseMissilesUsed: boolean;
+  // launch_point specific
+  launchLabel?: string;
+  // target_point specific
+  targetName?: string;
+  targetType?: string;
+  targetCountry?: string;
+  // combined export specific
+  operation?: string;
+  interceptionRate?: number;
+  estimatedMunitionsCount?: number;
 }

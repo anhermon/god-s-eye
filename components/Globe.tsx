@@ -25,6 +25,7 @@ import CameraLayer from "@/components/layers/CameraLayer";
 import LiveStreamLayer from "@/components/layers/LiveStreamLayer";
 import NewsLayer from "@/components/layers/NewsLayer";
 import MilitaryLayer from "@/components/layers/MilitaryLayer";
+import ConflictLayer from "@/components/layers/ConflictLayer";
 import DeploymentLayer from "@/components/layers/DeploymentLayer";
 
 export default function Globe() {
@@ -230,6 +231,7 @@ export default function Globe() {
           {layers.livestreams && <LiveStreamLayer viewer={viewerRef.current} />}
           {layers.news && <NewsLayer viewer={viewerRef.current} />}
           {layers.militaryActions && <MilitaryLayer viewer={viewerRef.current} />}
+          {layers.iranConflict && <ConflictLayer viewer={viewerRef.current} />}
           <DeploymentLayer viewer={viewerRef.current} />
         </>
       )}

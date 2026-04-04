@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Cesium from 'cesium';
-import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient } from '@/types';
+import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient, ConflictEvent } from '@/types';
 
 export interface Viewport {
   centerLat: number;
@@ -64,6 +64,8 @@ interface WorldViewStore {
   setDisasterEvents: (events: Disaster[]) => void;
   militaryActions: MilitaryAction[];
   setMilitaryActions: (actions: MilitaryAction[]) => void;
+  conflictEvents: ConflictEvent[];
+  setConflictEvents: (events: ConflictEvent[]) => void;
 
   viewport: Viewport;
   setViewport: (v: Viewport) => void;
@@ -123,6 +125,7 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     livestreams: false,
     news: false,
     militaryActions: false,
+    iranConflict: true,
   },
   toggleLayer: (layer) =>
     set((state) => ({
@@ -211,6 +214,8 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
   setDisasterEvents: (events) => set({ disasterEvents: events }),
   militaryActions: [],
   setMilitaryActions: (actions) => set({ militaryActions: actions }),
+  conflictEvents: [],
+  setConflictEvents: (events) => set({ conflictEvents: events }),
 
   agentSwarmStatus: {
     ollamaConnected: false,
